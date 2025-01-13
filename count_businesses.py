@@ -91,7 +91,7 @@ import pandas as pd
 
 import re 
 # Load your data
-lawrenceville_data = pd.read_csv('lawrenceville_data_cleaned_updated.csv')
+#lawrenceville_data = pd.read_csv('lawrenceville_data_cleaned_updated.csv')
 
 # # Convert address and business name columns to lowercase for case-insensitive comparison
 # lawrenceville_data['Address'] = lawrenceville_data['Address'].str.lower()
@@ -112,45 +112,33 @@ lawrenceville_data = pd.read_csv('lawrenceville_data_cleaned_updated.csv')
 #     if row['Business Name'] == row['Address']:
 #         lawrenceville_data.at[idx, 'Business Name'] = ''
 
-import pandas as pd
-import re
+# import pandas as pd
+# from fuzzywuzzy import fuzz
 
-# Load the data
-data = pd.read_csv('lawrenceville_data_cleaned_updated.csv')
+# # Load the CSV file
+# df = pd.read_csv('lawrenceville_data_with_business_info.csv')  # Replace with the actual filename
 
-# Function to normalize text for consistent comparison
-def normalize_text(text):
-    if pd.isna(text):
-        return ''
-    text = text.lower()
-    text = re.sub(r'\bapt(?:\.|)?(?:artment)?\b', 'apt', text)  # Normalize apartment to apt
-    text = re.sub(r'\bsuite\b', 'ste', text)                    # Normalize suite
-    text = re.sub(r'\bunit\b', '', text)                        # Remove 'unit'
-    text = re.sub(r'\b(?:st|street)\b', 'st', text)             # Standardize street
-    text = re.sub(r'[^\w\s]', '', text).strip()                 # Remove punctuation and extra spaces
-    return text
+# # Function to check if the address matches the majority of the characters in the business name
+# def is_similar(address, business_name, threshold=80):
+#     # Check for NaN values
+#     if pd.isna(address) or pd.isna(business_name):
+#         return False
+#     # Calculate similarity ratio
+#     similarity = fuzz.ratio(address.lower(), business_name.lower())
+#     return similarity >= threshold
 
-# Normalize Address and Business Name columns for comparison
-data['Normalized_Address'] = data['Address'].apply(normalize_text)
-data['Normalized_Business'] = data['Business Name'].apply(normalize_text)
+# # Apply the function to determine if the business name should be cleared
+# df['Business Name'] = df.apply(
+#     lambda row: '' if is_similar(str(row['Address']), str(row['Business Name'])) else row['Business Name'],
+#     axis=1
+# )
 
-# Set Business Name to empty string where it matches Address (after normalization)
-data.loc[data['Normalized_Address'] == data['Normalized_Business'], 'Business Name'] = ''
+# # Save the cleaned DataFrame to a new CSV
+# df.to_csv('cleaned_lawrenceville_data_with_business_info.csv', index=False)
 
-# Additional rule: set Business Name to '' if it's an "apartment" version of the Address
-def is_apartment_version(base, comparison):
-    return base in comparison and 'apt' in comparison
+df = pd.read_csv("cleaned_lawrenceville_data_with_business_info.csv")
 
-for idx, row in data.iterrows():
-    if is_apartment_version(row['Normalized_Address'], row['Normalized_Business']):
-        data.at[idx, 'Business Name'] = ''
+#Count rows where 'Business Name' is not empty
+business_count = df['Business Name'].notna().sum()
 
-# Drop the helper columns
-data.drop(columns=['Normalized_Address', 'Normalized_Business'], inplace=True)
-
-# Save the cleaned data to a new CSV
-data.to_csv('lawrenceville_data_cleaned_updated.csv', index=False)
-
-print("Data cleaned and saved to 'lawrenceville_data_cleaned_updated.csv'")
-
-
+print(f"Number of rows with an entry in the 'Business Name' column: {business_count}")
